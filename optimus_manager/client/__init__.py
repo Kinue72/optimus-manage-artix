@@ -172,9 +172,8 @@ def _send_command(command):
 
     except (ConnectionRefusedError, OSError):
         print("Cannot connect to the UNIX socket at %s. Is optimus-manager-daemon running ?\n"
-              "\nYou can enable and start it by running those commands as root :\n"
-              "\nsystemctl enable optimus-manager.service\n"
-              "systemctl start optimus-manager.service\n" % envs.SOCKET_PATH)
+              "\nYou can enable and start it's service, per init as described at Artix Linux Wiki.\n")
+        #      "" % envs.SOCKET_PATH)
         sys.exit(1)
 
 def _set_temp_config_and_exit(rel_path):

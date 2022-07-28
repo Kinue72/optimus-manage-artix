@@ -24,9 +24,7 @@ def run_switch_checks(config, requested_mode):
 def _check_daemon_active():
 
     if not checks.is_daemon_active():
-        print("The optimus-manager service is not running. Please enable and start it with :\n\n"
-              "sudo systemctl enable optimus-manager\n"
-              "sudo systemctl start optimus-manager\n")
+        print("The optimus-manager service is not running. Please enable and start it as described at Artix Linux Wiki, and reboot\n")
         sys.exit(1)
 
 def _check_power_switching(config):
@@ -103,8 +101,8 @@ def _check_wayland():
 def _check_bumblebeed():
 
     if checks.is_bumblebeed_service_active():
-        print("WARNING : The Bumblebee service (bumblebeed.service) is running, and this can interfere with optimus-manager."
-              " Before attempting a GPU switch, it is recommended that you disable this service (sudo systemctl disable bumblebeed.service)"
+        print("WARNING : The Bumblebee service (bumblebeed) is running, and this can interfere with optimus-manager."
+              " Before attempting a GPU switch, it is recommended that you disable this service as described at Artix Linux Wiki."
               " then REBOOT your computer.\n"
               "Ignore this warning and proceed with GPU switching now ? (y/N)")
 

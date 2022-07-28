@@ -6,7 +6,6 @@ import json
 from . import envs
 from .log_utils import get_logger
 
-
 class VarError(Exception):
     pass
 
