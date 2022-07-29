@@ -1,15 +1,13 @@
-# Maintainer: Robin Lange <robin dot langenc at gmail dot com>
-
-pkgname=optimus-manager-git
-pkgver=1.4
+pkgname=optimus-manager-artix-git
+pkgver=1.4.r12.g29d737f
 pkgrel=1
 pkgdesc="Management utility to handle GPU switching for Optimus laptops (Git version)"
 arch=('any')
 url="https://github.com/Askannz/optimus-manager"
 license=('MIT')
-conflicts=("optimus-manager")
+conflicts=("optimus-manager" "optimus-manager-git")
 provides=("optimus-manager=$pkgver")
-depends=('python3' 'python-setuptools' 'python-dbus' 'mesa-utils' 'xorg-xrandr')
+depends=('python3' 'python-setuptools' 'python-dbus' 'glxinfo' 'xorg-xrandr')
 optdepends=('bbswitch: alternative power switching method'
             'acpi_call: alternative power switching method'
             'xf86-video-intel: provides the Xorg intel driver')
@@ -28,8 +26,18 @@ backup=('etc/optimus-manager/xorg/integrated-mode/integrated-gpu.conf'
         'etc/optimus-manager/nvidia-disable.sh'
 
         'var/lib/optimus-manager/persistent/startup_mode')
-source=("git+https://github.com/Askannz/optimus-manager.git#branch=master")
-sha256sums=('SKIP')
+source=("git+https://github.com/Askannz/optimus-manager.git#branch=master"
+		"https://github.com/Kinue72/optimus-manage-artix/commit/55bcb54fea877bd133434d0fc1d38908bb838e7c.patch"
+		"https://github.com/Kinue72/optimus-manage-artix/commit/d55df8b87aed7661cdb1faca5579af1405524963.patch")
+sha256sums=('SKIP'
+			'SKIP'
+			'SKIP')
+
+prepare() {
+    cd "${srcdir}/optimus-manager/"
+    git apply ../55bcb54fea877bd133434d0fc1d38908bb838e7c.patch
+    git apply ../d55df8b87aed7661cdb1faca5579af1405524963.patch
+}
 
 pkgver() {
   cd "${srcdir}/optimus-manager/"
