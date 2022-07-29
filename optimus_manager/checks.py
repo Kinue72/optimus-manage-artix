@@ -83,39 +83,19 @@ def get_current_display_manager():
         return os.path.splitext(dm_service_filename)[0]
 
     #ihatebython
-    if init_system == "openrc":
-        if os.path.isfile("/run/openrc/daemons/gdm/001"):
-            dm_service_path = os.path.realpath("/etc/init.d/gdm")
-        elif os.path.isfile("/run/openrc/daemons/lightdm/001"):
-            dm_service_path = os.path.realpath("/etc/init.d/lightdm")
-        elif os.path.isfile("/run/openrc/daemons/lxdm/001"):
-            dm_service_path = os.path.realpath("/etc/init.d/lxdm")
-        elif os.path.isfile("/run/openrc/daemons/sddm/001"):
-            dm_service_path = os.path.realpath("/etc/init.d/sddm")
-        elif os.path.isfile("/run/openrc/daemons/xdm/001"):
-            dm_service_path = os.path.realpath("/etc/init.d/xdm")
-    elif init_system == "runit":
-        if os.path.isfile("/run/runit/service/gdm/run"):
-            dm_service_path = os.path.realpath("/etc/runit/sv/gdm")
-        elif os.path.isfile("/run/runit/service/lightdm/run"):
-            dm_service_path = os.path.realpath("/etc/runit/sv/lightdm")
-        elif os.path.isfile("/run/runit/service/lxdm/run"):
-            dm_service_path = os.path.realpath("/etc/runit/sv/lxdm")
-        elif os.path.isfile("/run/runit/service/sddm/run"):
-            dm_service_path = os.path.realpath("/etc/runit/sv/sddm")
-        elif os.path.isfile("/run/runit/service/xdm/run"):
-            dm_service_path = os.path.realpath("/etc/runit/sv/xdm")
-    elif init_system == "s6":
-        if os.path.isfile("/run/s6/service/gdm/run"):
-            dm_service_path = os.path.realpath("/etc/s6/sv/gdm")
-        elif os.path.isfile("/run/s6/service/lightdm/run"):
-            dm_service_path = os.path.realpath("/etc/s6/sv/lightdm")
-        elif os.path.isfile("/run/s6/service/lxdm/run"):
-            dm_service_path = os.path.realpath("/etc/s6/sv/lxdm")
-        elif os.path.isfile("/run/s6/service/sddm/run"):
-            dm_service_path = os.path.realpath("/etc/s6/sv/sddm")
-        elif os.path.isfile("/run/s6/service/xdm/run"):
-            dm_service_path = os.path.realpath("/etc/s6/sv/xdm")
+    dms = ["gdm", "lightdm", "lxdm", "sddm", "xdm"]
+    dm_service_path = ""
+
+    for dm in dms:
+        if init_system == "openrc" and os.path.isfile("/run/openrc/daemons/"+dm+"/001"):
+            dm_service_path = os.path.realpath("/etc/init.d/"+dm)
+            break
+        elif init_system == "runit" and os.path.isfile("/run/runit/service/"+dm+"/run"):
+            dm_service_path = os.path.realpath("/etc/runit/sv/"+dm)
+            break
+        elif init_system == "s6" and os.path.isfile("/run/s6/service/"+dm+"/run"):
+            dm_service_path = os.path.realpath("/etc/s6/sv/"+dm)
+            break
 
     if dm_service_path == "":
         print("No display-manager service file found, the daemon stops")
@@ -179,34 +159,34 @@ def _is_gl_provider_nvidia():
 
 
 def _is_service_active(service_name):
-    # logger = get_logger()
+    logger = get_logger()
 
     try:
         system_bus = dbus.SystemBus()
         return _is_service_active_dbus(system_bus, service_name)
     except dbus.exceptions.DBusException:
-        # logger.warning(
-        #     "Cannot communicate with the DBus system bus to check status of %s."
-        #     " Is DBus running ? Falling back to bash commands", service_name)
         if subprocess.run(f"pidof init", shell=True, stdout=subprocess.DEVNULL).returncode == 0:
             return _is_service_active_openrc(service_name)
         elif subprocess.run(f"pidof runit", shell=True, stdout=subprocess.DEVNULL).returncode == 0:
             return _is_service_active_sv(service_name)
         elif subprocess.run(f"pidof s6-svscan", shell=True, stdout=subprocess.DEVNULL).returncode == 0:
             return _is_service_active_s6(service_name)
+        logger.warning(
+            "Cannot communicate with the DBus system bus to check status of %s."
+            " Is DBus running ? Falling back to bash commands", service_name)
         return _is_service_active_systemd(service_name)
 
 def _is_service_active_dbus(system_bus, service_name):
-    systemd = system_bus.get_object("org.freedesktop.login1", "/org/freedesktop/login1")
+    systemd = system_bus.get_object("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
 
     try:
-        unit_path = systemd.GetUnit("%s.service" % service_name, dbus_interface="org.freedesktop.login1.Manager")
+        unit_path = systemd.GetUnit("%s.service" % service_name, dbus_interface="org.freedesktop.systemd1.Manager")
     except dbus.exceptions.DBusException as e:
         raise e
 
-    optimus_manager_interface = system_bus.get_object("org.freedesktop.login1", unit_path)
+    optimus_manager_interface = system_bus.get_object("org.freedesktop.systemd1", unit_path)
     properties_manager = dbus.Interface(optimus_manager_interface, 'org.freedesktop.DBus.Properties')
-    state = properties_manager.Get("org.freedesktop.login1.Unit", "SubState")
+    state = properties_manager.Get("org.freedesktop.systemd1.Unit", "SubState")
 
     return state == "running"
 
